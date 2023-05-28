@@ -7,24 +7,27 @@ private:
   unsigned long motion_continued_at;
 
   unsigned char sensor_pin;
-  unsigned long sensor_duration;
+  unsigned long sensor_active_duration;
 
   bool isMotionContinuable() {
-    return (motion_continued_at + sensor_duration) >= now;
+    return (motion_continued_at + sensor_active_duration) >= now;
   }
 
   void handleMotionStart() {
     if (is_motion && !isMotionContinuable()) {
       motion_started_at = now;
       motion_continued_at = now;
-      is_insleep = false;
     }
+  }
+
+  bool isIgnorable() {
+    return (now - motion_started_at)  < sensor_active_duration;
   }
 
   void handleMotionContinue() {
     if (is_motion && isMotionContinuable()) {
       motion_continued_at = now;
-      is_insleep = false;
+      is_insleep = isIgnorable();
     }
   }
 
@@ -35,9 +38,9 @@ private:
   }
 
 public:
-  Motion(unsigned long pin, unsigned long duration) {
+  Motion(unsigned long pin, unsigned long active_duration) {
     sensor_pin = pin;
-    sensor_duration = duration;
+    sensor_active_duration = active_duration;
     is_insleep = false;
     pinMode(pin, INPUT);
   }
